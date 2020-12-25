@@ -43,7 +43,7 @@ def generateMap():
             if level_map[i, j] == 0:
                 reward_map[i, j] = -100
             elif level_map[i, j] == 2:
-                reward_map[i, j] = 10
+                reward_map[i, j] = 100
 
     level_dictionary = {'level_map': level_map,
                         'reward_map': reward_map,
@@ -58,12 +58,26 @@ class Q_Learning:
     Q learning class
     '''
 
-
     def __init__(self):
         
         pass
         
-    
+    def getBestPath(self):
+        
+
+        agent_position = self.level["source_position"]
+        path = [(agent_position[0], agent_position[1])]
+        q_table = self.q_table
+
+        while self.level["reward_map"][agent_position[0], agent_position[1]] == -1:
+
+            action_index = np.argmax(q_table[agent_position[0], agent_position[1], :])
+            agent_position += self.actions[action_index]
+            path.append((agent_position[0], agent_position[1]))
+        
+        return path
+
+
     def train(self, level_dictionary, learning_rate, decay_rate, training_iter, optimum_action_probability):
         '''
         Fill the Q table for the AI agent
@@ -79,31 +93,51 @@ class Q_Learning:
         self.opt           = optimum_action_probability
 
         level_map = self.level["level_map"]
-        reward_map = self.level["reward_map"]
+        reward_map = self.level["reward_map"].copy()
 
-
+        # print(reward_map)
         for i in range(self.training_iter):
             
-            agent_position = self.level["source_position"]
+            agent_position = self.level["source_position"].copy()
             
             while reward_map[agent_position[0], agent_position[1]] == -1:
-                # Till the agent does not crash/reach goal
                 
+                
+                # Till the agent does not crash/reach goal
                 if np.random.rand() < self.opt:
                     action_index = np.argmax(self.q_table[agent_position[0], agent_position[1], :])
                 else:
-                    action_index = np.random.randint(5)
+                    action_index = np.random.randint(4)
 
+                agent_position_old = agent_position.copy()
                 agent_position += self.actions[action_index]
+
+                # Get reward
+                reward_t = reward_map[agent_position_old[0], agent_position_old[1]]
+                q_value_t = self.q_table[agent_position_old[0], agent_position_old[1], action_index].copy()
                 
+                # Temporal difference (Bellman equation)
+                # TD_t = r_t + gamma * (max Q_t+1) - Q_t  
+                temporal_difference_t = reward_t + self.decay * (np.max(self.q_table[agent_position[0], agent_position[1]])) - q_value_t
+
+                # Updating Q values
+                # Q_t = Q_t_old + learning_rate * TD_t
+                q_value_new = q_value_t + self.lr * temporal_difference_t
+                self.q_table[agent_position_old[0], agent_position_old[1], action_index] = q_value_new
+
+    
             
+            if level_map[agent_position[0], agent_position[1]] != 2:
+                self.q_table[agent_position[0], agent_position[1]] = -100            
+        
+        # print(np.max(self.q_table, axis=2))
+    
 if __name__=="__main__":
 
     map_dictionary = generateMap()
     trainer = Q_Learning()
-    trainer.train(map_dictionary, 0.9, 0.9, 100, 0.85)
-
-
+    trainer.train(map_dictionary, 0.9, 0.9, 100, 0.9)
+    print("Shortest path indices:", trainer.getBestPath())
 
                 
 
