@@ -125,11 +125,11 @@ class Q_Learning:
                 q_value_new = q_value_t + self.lr * temporal_difference_t
                 self.q_table[agent_position_old[0], agent_position_old[1], action_index] = q_value_new
 
-    
+
+            # For terminal locations
+            self.q_table[agent_position[0], agent_position[1]] = reward_map[agent_position[0], agent_position[1]]
             
-            if level_map[agent_position[0], agent_position[1]] != 2:
-                self.q_table[agent_position[0], agent_position[1]] = -100            
-        
+
         # print(np.max(self.q_table, axis=2))
     
 if __name__=="__main__":
