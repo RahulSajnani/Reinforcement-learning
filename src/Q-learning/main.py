@@ -63,8 +63,10 @@ class Q_Learning:
         pass
         
     def getBestPath(self):
+        '''
+        Obtain best path from the Q table that is learned
+        '''
         
-
         agent_position = self.level["source_position"]
         path = [(agent_position[0], agent_position[1])]
         q_table = self.q_table
@@ -129,7 +131,7 @@ class Q_Learning:
             # For terminal locations
             self.q_table[agent_position[0], agent_position[1]] = reward_map[agent_position[0], agent_position[1]]
             
-
+        
         # print(np.max(self.q_table, axis=2))
     
 if __name__=="__main__":
@@ -138,8 +140,4 @@ if __name__=="__main__":
     trainer = Q_Learning()
     trainer.train(map_dictionary, 0.9, 0.9, 100, 0.9)
     print("Shortest path indices:", trainer.getBestPath())
-
-                
-
-        
-        
+       
