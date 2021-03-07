@@ -10,7 +10,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 
-
+'''
+Author: Rahul Sajnani
+Date  : 1 March 2021
+'''
 def conv_block(in_channels, out_channels, kernel, padding):
 
     return nn.Sequential(
