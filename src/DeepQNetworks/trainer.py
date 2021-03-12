@@ -31,7 +31,8 @@ class AgentTrainer(pl.LightningModule):
 
         # Initialize drone
         self.agent = Drone(start_position = agent_position,
-                           velocity_factor = self.hparams.environment.agent.velocity_factor)
+                           velocity_factor = self.hparams.environment.agent.velocity_factor,
+                           hparams = self.hparams)
         
         # Initialize sensor
         self.heat_sensor = HeatSensor(source_position, 
@@ -39,6 +40,10 @@ class AgentTrainer(pl.LightningModule):
                                       reward_factor = self.hparams.environment.reward.factor)
         
         self.net = DQN(3, 6)
+
+        self.total_reward = 0.0
+        self.episode_reward = 0.0
+
         
     def configure_optimizers(self):
 
@@ -48,7 +53,7 @@ class AgentTrainer(pl.LightningModule):
         return [optimizer], [scheduler]
     
     def training_step(self, batch, batch_idx):
-
+        
         pass
 
     def forward(self, x):

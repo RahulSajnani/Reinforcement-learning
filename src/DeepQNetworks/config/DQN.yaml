@@ -1,7 +1,7 @@
 trainer:
     gpus: -1
     distributed_backend: "dp"
-    accumulate_grad_batches: 2
+    accumulate_grad_batches: 1
     profiler: False
     max_epochs: 50
 
@@ -28,11 +28,17 @@ environment:
       z: 10.0
   reward:
     goal: 1000
-    collision: 100
+    collision: -100
     factor: 0.1
   sensor:
     signal_strength_factor: 0.01
   agent:
     velocity_factor: 2
+
+dataset:
+  loader:
+    batch_size: 4
+    num_workers: 8
+    shuffle: False    
 
 

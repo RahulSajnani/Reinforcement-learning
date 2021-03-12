@@ -7,7 +7,7 @@ class Drone:
     '''
     Drone class
     '''
-    def __init__(self, start_position, velocity_factor):
+    def __init__(self, start_position, velocity_factor, hparams):
 
         self.start_position = start_position
         self.scaling_factor = velocity_factor
@@ -39,24 +39,34 @@ class Drone:
         scaling_factor = self.scaling_factor
         
         if action.item() == 0:
-            self.quad_offset = (scaling_factor, 0, 0)
+            quad_offset = (scaling_factor, 0, 0)
         
         elif action.item() == 1:
-            self.quad_offset = (0, scaling_factor, 0)
+            quad_offset = (0, scaling_factor, 0)
         
         elif action.item() == 2:
-            self.quad_offset = (0, 0, scaling_factor)
+            quad_offset = (0, 0, scaling_factor)
         
         elif action.item() == 3:
-            self.quad_offset = (-scaling_factor, 0, 0)
+            quad_offset = (-scaling_factor, 0, 0)
         
         elif action.item() == 4:
-            self.quad_offset = (0, -scaling_factor, 0)
+            quad_offset = (0, -scaling_factor, 0)
         
         elif action.item() == 5:
-            self.quad_offset = (0, 0, -scaling_factor)
+            quad_offset = (0, 0, -scaling_factor)
 
-        return self.quad_offset
+        return quad_offset
+
+    def isDone(self, reward):
+        '''
+        Check if the drone has reached goal or collided
+        '''
+
+        # Either reached goal or collided
+        if (reward >= self.hparams.environment.reward.goal) or (reward <= self.hparams.environment.reward.collision):
+            self.reset()
+            return True
 
     def postprocessImage(self, responses):
         '''
@@ -82,9 +92,9 @@ class Drone:
         self.position = self.client.simGetVehiclePose()
         
         print(self.position)
-        self.position.x_val = self.start_position[0]
-        self.position.y_val = self.start_position[1]
-        self.position.z_val = self.start_position[2]
+        self.position.x_val = self.start_position[0, 0]
+        self.position.y_val = self.start_position[1, 0]
+        self.position.z_val = self.start_position[2, 0]
 
         # Set init position
         # self.client.simSetVehiclePose(self.position, True, "PX4")
