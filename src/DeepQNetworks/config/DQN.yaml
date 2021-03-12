@@ -1,0 +1,38 @@
+trainer:
+    gpus: -1
+    distributed_backend: "dp"
+    accumulate_grad_batches: 2
+    profiler: False
+    max_epochs: 50
+
+scheduler:
+  type: MultiStepLR
+  args: 
+    milestones: [15, 30] #[6, 8, 18]
+    gamma: 0.1
+
+optimizer:
+  type: Adam
+  args:
+    lr: 1e-4
+
+environment:
+  position:
+    start:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    end:
+      x: 100.0
+      y:   0.0
+      z: 10.0
+  reward:
+    goal: 1000
+    collision: 100
+    factor: 0.1
+  sensor:
+    signal_strength_factor: 0.01
+  agent:
+    velocity_factor: 2
+
+

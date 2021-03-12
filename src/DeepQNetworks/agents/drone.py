@@ -7,9 +7,10 @@ class Drone:
     '''
     Drone class
     '''
-    def __init__(self, start_position):
+    def __init__(self, start_position, velocity_factor):
 
         self.start_position = start_position
+        self.scaling_factor = velocity_factor
         self.reset()
 
     def initializeClient(self):
@@ -33,6 +34,29 @@ class Drone:
         else:
             return False
 
+    def nextAction(self, action):
+        
+        scaling_factor = self.scaling_factor
+        
+        if action.item() == 0:
+            self.quad_offset = (scaling_factor, 0, 0)
+        
+        elif action.item() == 1:
+            self.quad_offset = (0, scaling_factor, 0)
+        
+        elif action.item() == 2:
+            self.quad_offset = (0, 0, scaling_factor)
+        
+        elif action.item() == 3:
+            self.quad_offset = (-scaling_factor, 0, 0)
+        
+        elif action.item() == 4:
+            self.quad_offset = (0, -scaling_factor, 0)
+        
+        elif action.item() == 5:
+            self.quad_offset = (0, 0, -scaling_factor)
+
+        return self.quad_offset
 
     def postprocessImage(self, responses):
         '''

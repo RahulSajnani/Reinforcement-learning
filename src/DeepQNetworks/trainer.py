@@ -1,26 +1,74 @@
 import torch
 from models.DQN import DQN
 from sensors.heat_sensor import HeatSensor
+from agents.drone import Drone
+import os, hydra, logging, glob
+import pytorch_lightning as pl
+from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.loggers import CometLogger, TensorBoardLogger
 
+class AgentTrainer(pl.LightningModule):
+    '''
+    Pytorch trainer class for Drone Reinforcement learning
+    '''
 
-class AgentTrainer:
-
-    def __init__(self, agent, sensor, source_position, hparams):
+    def __init__(self, hparams):
+        '''
+        Initializations
+        '''
         
-        self.agent = agent
-        self.heat_sensor = sensor
-        self.source_position = source_position
         self.hparams = hparams
 
-    def train(self):
+        # Position of human 
+        source_position = torch.tensor([[self.hparams.environment.position.start.x], 
+                                        [self.hparams.environment.position.start.y], 
+                                        [self.hparams.environment.position.start.z]]).float()
+        
+        # Position of agent
+        agent_position  = torch.tensor([[self.hparams.environment.position.end.x], 
+                                        [self.hparams.environment.position.end.y], 
+                                        [self.hparams.environment.position.end.z]]).float()
+
+        # Initialize drone
+        self.agent = Drone(start_position = agent_position,
+                           velocity_factor = self.hparams.environment.agent.velocity_factor)
+        
+        # Initialize sensor
+        self.heat_sensor = HeatSensor(source_position, 
+                                      strength_factor = self.hparams.environment.sensor.signal_strength_factor, 
+                                      reward_factor = self.hparams.environment.reward.factor)
+        
+        self.net = DQN(3, 6)
+        
+    def configure_optimizers(self):
+
+        optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.net.)
+        scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
+        
+        return [optimizer], [scheduler]
+    
+    def training_step(self, batch, batch_idx):
+
         pass
 
+    def forward(self, x):
+
+        return self.net(x)
+
+
+seed_everything(123)
+log = logging.getLogger(__name__)
+
+@hydra.main(config_path="config", config_name="DQN.yaml")
+def main(cfg):
+
+    tb_logger = TensorBoardLogger()
+    log.info(cfg.pretty())
+    model = AgentTrainer(hparams = cfg)
+    trainer = Trainer(**cfg.trainer, logger = tb_logger)
+    trainer.fit(model)
 
 
 if __name__=="__main__":
 
-    source_position = torch.tensor([[1], [2], [3]]).float()
-    agent_position = torch.tensor([[4], [2], [3]]).float()
-    heat_sensor = HeatSensor(source_position)
-    
-    trainer = AgentTrainer(0, heat_sensor, source_position, 0)
+    main()
