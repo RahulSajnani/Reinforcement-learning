@@ -54,12 +54,12 @@ class AgentTrainer(pl.LightningModule):
         self.net = DQN(self.hparams.model.in_channels, self.hparams.model.actions)
 
         self.target_net = DQN(self.hparams.model.in_channels, self.hparams.model.actions)
-        
+
         self.total_reward = 0.0
         self.episode_reward = 0.0
         self.populate(self.hparams.model.replay_buffer_size)
 
-        
+
     def configure_optimizers(self):
 
         optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.net.parameters())
@@ -77,10 +77,13 @@ class AgentTrainer(pl.LightningModule):
         """
         states, actions, rewards, dones, next_states = batch
 
-        state_action_values = self.net(states).gather(1, actions.unsqueeze(-1)).squeeze(-1)
+        print(states["image"].shape)
+        state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
+
+        print(state_action_values)
 
         with torch.no_grad():
-            next_state_values = self.target_net(next_states).max(1)[0]
+            next_state_values = self.target_net(next_states["image"], next_states["signal"]).max(1)[0]
             next_state_values[dones] = 0.0
             next_state_values = next_state_values.detach()
 
@@ -102,7 +105,7 @@ class AgentTrainer(pl.LightningModule):
         Training steps
         '''
 
-        device = self.get_device(batch)
+        device = self.get_device()
         epsilon = max(self.hparams.model.min_epsilon, self.hparams.model.max_epsilon - self.global_step + 1 / self.hparams.model.stop_decay)
 
         # step through environment with agent
@@ -127,7 +130,7 @@ class AgentTrainer(pl.LightningModule):
         }
 
         return OrderedDict({'loss': loss, 'log': log, 'progress_bar': log})
-        
+
 
 
     def __dataloader(self) -> DataLoader:
@@ -135,7 +138,7 @@ class AgentTrainer(pl.LightningModule):
         Initialize the Replay Buffer dataset used for retrieving experiences
         """
 
-        dataset = RLDataset(self.buffer, self.episode_length)
+        dataset = RLDataset(self.replay_buffer, 4)
         dataloader = DataLoader(
             dataset=dataset,
             **self.hparams.dataset.loader)
@@ -154,7 +157,7 @@ class AgentTrainer(pl.LightningModule):
         Retrieve device currently being used by minibatch
         """
 
-        return self.net.device.index if self.on_gpu else 'cpu'
+        return self.device.index if self.on_gpu else 'cpu'
 
     def forward(self, x):
 

@@ -107,8 +107,8 @@ class Drone:
         state_image = self.getImage()
         state_signal_strength = self.sensor.getReward(position)
 
-        state_image = torch.tensor(state_image).unsqueeze(0).permute(0, 3, 1, 2)
-        state_signal_strength = torch.tensor([state_signal_strength]).unsqueeze(0)
+        state_image = torch.tensor(state_image).permute(2, 0, 1).float()
+        state_signal_strength = torch.tensor([state_signal_strength]).float()
 
         print(state_image.shape, state_signal_strength.shape)
         return {"image": state_image, "signal": state_signal_strength}
@@ -127,7 +127,7 @@ class Drone:
                 for key in state_dict:
                     state_dict[key] = state_dict[key].cuda(device)
 
-            q_values = net(state_dict["image"], state_dict["signal"])
+            q_values = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0))
             _, action = torch.max(q_values, dim = 1)
             action = int(action.item())
 

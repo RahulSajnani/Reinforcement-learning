@@ -51,7 +51,7 @@ dataset:
   loader:
     batch_size: 16
     shuffle: False 
-    sampler: None   
+    #sampler: None   
 
 model:
   replay_buffer_size: 10
