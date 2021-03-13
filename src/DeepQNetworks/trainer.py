@@ -77,10 +77,10 @@ class AgentTrainer(pl.LightningModule):
         """
         states, actions, rewards, dones, next_states = batch
 
-        print(states["image"].shape)
+        # print(states["image"].shape)
         state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
 
-        print(state_action_values)
+        # print(state_action_values)
 
         with torch.no_grad():
             next_state_values = self.target_net(next_states["image"], next_states["signal"]).max(1)[0]

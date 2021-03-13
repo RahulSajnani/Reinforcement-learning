@@ -155,7 +155,7 @@ class Drone:
         quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
 
         state_dict = self.getAgentState()
-        print(action_offset, quad_state)
+        # print(action_offset, quad_state)
         self.client.moveByVelocityAsync(
             quad_vel.x_val + action_offset[0],
             quad_vel.y_val + action_offset[1],
@@ -164,13 +164,13 @@ class Drone:
         ).join()
         #time.sleep(0.5)
 
-        print(self.position)
+        # print(self.position)
         current_position = self.convertPositionToTensor(self.position.position)
         done, reward = self.isDone()
 
         new_state_dict = self.getAgentState()
         self.position = self.client.simGetVehiclePose()
-        print(self.client.getMultirotorState().kinematics_estimated.position)
+        # print(self.client.getMultirotorState().kinematics_estimated.position)
         if not done:
             reward = self.sensor.getReward(current_position)
 
@@ -247,13 +247,14 @@ class Drone:
         #
         #self.client.simSetVehiclePose(self.position, True)
         self.state = self.client.getMultirotorState().kinematics_estimated.position
-        print(self.state)
+        #print(self.state)
 
         # Take off with the drone
         #self.client.takeoffAsync().join()
         #time.sleep(0.5)
         self.position = self.client.simGetVehiclePose()
         print("#" * 30)
+        print("RESET")
 
     def getImage(self):
         '''
