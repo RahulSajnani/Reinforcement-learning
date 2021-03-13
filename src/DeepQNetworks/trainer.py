@@ -54,7 +54,7 @@ class AgentTrainer(pl.LightningModule):
 
         self.total_reward = 0.0
         self.episode_reward = 0.0
-        self.populate()
+        self.populate(self.hparams.model.replay_buffer_size)
 
 
     def configure_optimizers(self):

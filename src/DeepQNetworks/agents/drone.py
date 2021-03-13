@@ -247,7 +247,7 @@ class Drone:
         print(self.state)
 
         # Take off with the drone
-        self.client.takeoffAsync().join()
+        #self.client.takeoffAsync().join()
         #time.sleep(0.5)
         self.position = self.client.simGetVehiclePose()
         print("#" * 30)

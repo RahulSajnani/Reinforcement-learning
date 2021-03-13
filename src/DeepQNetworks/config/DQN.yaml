@@ -19,13 +19,13 @@ optimizer:
 environment:
   position:
     start:
-      x: 0.0
-      y: 0.0
-      z: 0.0
-    end:
-      x: 100.0
+      x:   0.0
       y:   0.0
-      z:  10.0
+      z: -10.0
+    end:
+      x: 500.0
+      y:   0.0
+      z: -10.0
   quaternion:
     start:
       w_val: 1.0
@@ -54,6 +54,6 @@ dataset:
     sampler: None   
 
 model:
-  replay_buffer_size: 50
+  replay_buffer_size: 10
   in_channels: 3
   actions: 6
