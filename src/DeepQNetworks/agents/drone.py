@@ -54,6 +54,8 @@ class Drone:
         current_position = self.convertPositionToTensor(self.position.position)
         distance = self.sensor.getDistanceFromDestination(current_position)
         if distance < self.scaling_factor:
+            print("#"*100)
+            print("Reached goal")
             return True
         else:
             return False
@@ -110,7 +112,10 @@ class Drone:
         state_image = torch.tensor(state_image).permute(2, 0, 1).float()
         state_signal_strength = torch.tensor([state_signal_strength]).float()
 
-        print(state_image.shape, state_signal_strength.shape)
+        #print(state_image.max())
+        state_image = state_image / 255.0
+
+        #print(state_image.shape, state_signal_strength.shape)
         return {"image": state_image, "signal": state_signal_strength}
 
     def getAction(self, net, epsilon, device):

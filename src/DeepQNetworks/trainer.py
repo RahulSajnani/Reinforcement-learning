@@ -96,7 +96,9 @@ class AgentTrainer(pl.LightningModule):
         Carries out several random steps through the environment to initially fill
         up the replay buffer with experiences
         '''
+
         for i in range(steps):
+            print(i)
             self.agent.playStep(self.net, 1.0, self.get_device())
 
 
@@ -138,7 +140,7 @@ class AgentTrainer(pl.LightningModule):
         Initialize the Replay Buffer dataset used for retrieving experiences
         """
 
-        dataset = RLDataset(self.replay_buffer, 4)
+        dataset = RLDataset(self.replay_buffer, self.hparams.model.sample_size)
         dataloader = DataLoader(
             dataset=dataset,
             **self.hparams.dataset.loader)
