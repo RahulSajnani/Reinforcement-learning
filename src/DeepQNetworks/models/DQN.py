@@ -27,8 +27,8 @@ def conv_block(in_channels, out_channels, kernel, padding):
 class convrelu(nn.Module):
 
     def __init__(self, in_channels, out_channels, kernel, num_layers = 2):
-        super().__init__()
-
+        #super().__init__()
+        super(convrelu, self).__init__()
         self.conv_layers = self.create_block(in_channels, out_channels, kernel, num_layers)
 
         # Skip connection
@@ -62,7 +62,7 @@ class convrelu(nn.Module):
         if self.skip:
             out = out + self.identity_block(x)
 
-        return out    
+        return out
 
 
 class DQN(nn.Module):
@@ -90,7 +90,7 @@ class DQN(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
-        
+
         x = x.view(x.size(0), -1)
         x = torch.hstack((x, x_sensor))
         x = F.relu(self.fc4(x))
@@ -105,5 +105,5 @@ if __name__=="__main__":
     x_sensor = torch.randn(2, 1)
     net = DQN(3, 6)
     out = net(x, x_sensor)
-    
+
     print(out.shape)

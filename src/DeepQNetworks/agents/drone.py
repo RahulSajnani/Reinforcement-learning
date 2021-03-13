@@ -15,7 +15,7 @@ class Drone:
 
     def initializeClient(self):
         '''
-        Initializing airsim client 
+        Initializing airsim client
         '''
 
         self.client = airsim.MultirotorClient()
@@ -27,7 +27,7 @@ class Drone:
         '''
         Check if Drone has collided
         '''
-        
+
         collision_info = self.client.simGetCollisionInfo()
         if collision_info.has_collided:
             return True
@@ -35,24 +35,24 @@ class Drone:
             return False
 
     def nextAction(self, action):
-        
+
         scaling_factor = self.scaling_factor
-        
+
         if action.item() == 0:
             quad_offset = (scaling_factor, 0, 0)
-        
+
         elif action.item() == 1:
             quad_offset = (0, scaling_factor, 0)
-        
+
         elif action.item() == 2:
             quad_offset = (0, 0, scaling_factor)
-        
+
         elif action.item() == 3:
             quad_offset = (-scaling_factor, 0, 0)
-        
+
         elif action.item() == 4:
             quad_offset = (0, -scaling_factor, 0)
-        
+
         elif action.item() == 5:
             quad_offset = (0, 0, -scaling_factor)
 
@@ -74,8 +74,8 @@ class Drone:
         '''
 
         response = responses[0]
-        img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8) 
-        img_rgba = img1d.reshape(response.height, response.width, 4) 
+        img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
+        img_rgba = img1d.reshape(response.height, response.width, 4)
         img2d = np.flipud(img_rgba)
 
         image = Image.fromarray(img2d)
@@ -90,20 +90,22 @@ class Drone:
 
         self.initializeClient()
         self.position = self.client.simGetVehiclePose()
-        
-        print(self.position)
-        self.position.x_val = self.start_position[0, 0]
-        self.position.y_val = self.start_position[1, 0]
-        self.position.z_val = self.start_position[2, 0]
 
+        start = self.start_position.numpy()
+        print(self.position)
+        self.position.position.x_val = float(start[0, 0])
+        self.position.position.y_val = float(start[1, 0])
+        self.position.position.z_val = float(start[2, 0])
+
+        print("position, ", self.position)
         # Set init position
-        # self.client.simSetVehiclePose(self.position, True, "PX4")
+        self.client.simSetVehiclePose(self.position, True)
         self.state = self.client.getMultirotorState().kinematics_estimated.position
         print(self.state)
 
         # Take off with the drone
         self.client.takeoffAsync().join()
-        
+
     def getImage(self):
         '''
         Get observation from drone sensors
