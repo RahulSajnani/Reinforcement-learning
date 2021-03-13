@@ -38,11 +38,11 @@ class AgentTrainer(pl.LightningModule):
                                       strength_factor = self.hparams.environment.sensor.signal_strength_factor,
                                       reward_factor = self.hparams.environment.reward.factor)
 
-        
+
         # Initialize Replay buffer
         self.replay_buffer = ReplayBuffer(capacity = self.hparams.model.replay_buffer_size)
-        
-        
+
+
         # Initialize drone
         self.agent = Drone(start_position = agent_position,
                            velocity_factor = self.hparams.environment.agent.velocity_factor,
@@ -71,13 +71,14 @@ class AgentTrainer(pl.LightningModule):
         Args:
             steps: number of random steps to populate the buffer with
         """
-        
+
         for i in range(steps):
-            self.agent.playStep(self.net, self.get_device())
-        
+            print(i)
+            self.agent.playStep(self.net, self.get_device(), populate = 1)
+
 
     def training_step(self, batch, batch_idx):
-        
+
         pass
 
 
@@ -85,14 +86,14 @@ class AgentTrainer(pl.LightningModule):
         """
         Initialize the Replay Buffer dataset used for retrieving experiences
         """
-        
+
         dataset = RLDataset(self.buffer, self.episode_length)
         dataloader = DataLoader(
             dataset=dataset,
             **self.hparams.dataset.loader)
 
         return dataloader
-    
+
     def train_dataloader(self) -> DataLoader:
         """
         Get train loader
@@ -100,12 +101,12 @@ class AgentTrainer(pl.LightningModule):
 
         return self.__dataloader()
 
-    def get_device(self, batch) -> str:
+    def get_device(self) -> str:
         """
         Retrieve device currently being used by minibatch
         """
-        
-        return batch[0].device.index if self.on_gpu else 'cpu'
+
+        return self.net.device.index if self.on_gpu else 'cpu'
 
     def forward(self, x):
 
