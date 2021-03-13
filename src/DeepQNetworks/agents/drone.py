@@ -114,7 +114,7 @@ class Drone:
         Perform action
         '''
 
-        if np.random.random() < self.hparams.agent.epsilon:
+        if np.random.random() < self.hparams.environment.agent.epsilon:
             action = np.random.randint(self.hparams.model.actions)
         else:
             state_dict = self.getAgentState()
@@ -240,6 +240,7 @@ class Drone:
 
         # Take off with the drone
         self.client.takeoffAsync().join()
+        time.sleep(0.5)
 
     def getImage(self):
         '''
