@@ -9,6 +9,7 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import CometLogger, TensorBoardLogger
 from torch.utils.data import DataLoader
 import torch.nn as nn
+from collections import OrderedDict
 
 class AgentTrainer(pl.LightningModule):
     '''
@@ -52,11 +53,13 @@ class AgentTrainer(pl.LightningModule):
 
         self.net = DQN(self.hparams.model.in_channels, self.hparams.model.actions)
 
+        self.target_net = DQN(self.hparams.model.in_channels, self.hparams.model.actions)
+        
         self.total_reward = 0.0
         self.episode_reward = 0.0
         self.populate(self.hparams.model.replay_buffer_size)
 
-
+        
     def configure_optimizers(self):
 
         optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.net.parameters())
@@ -64,22 +67,67 @@ class AgentTrainer(pl.LightningModule):
 
         return [optimizer], [scheduler]
 
-    def populate(self, steps: int = 1000) -> None:
+    def dqn_mse_loss(self, batch) -> torch.Tensor:
         """
+        Calculates the mse loss using a mini batch from the replay buffer
+        Args:
+            batch: current mini batch of replay data
+        Returns:
+            loss
+        """
+        states, actions, rewards, dones, next_states = batch
+
+        state_action_values = self.net(states).gather(1, actions.unsqueeze(-1)).squeeze(-1)
+
+        with torch.no_grad():
+            next_state_values = self.target_net(next_states).max(1)[0]
+            next_state_values[dones] = 0.0
+            next_state_values = next_state_values.detach()
+
+        expected_state_action_values = next_state_values * self.hparams.model.gamma + rewards
+
+        return nn.MSELoss()(state_action_values, expected_state_action_values)
+
+    def populate(self, steps: int = 1000) -> None:
+        '''
         Carries out several random steps through the environment to initially fill
         up the replay buffer with experiences
-        Args:
-            steps: number of random steps to populate the buffer with
-        """
-
+        '''
         for i in range(steps):
-            print(i)
-            self.agent.playStep(self.net, self.get_device(), populate = 1)
+            self.agent.playStep(self.net, 1.0, self.get_device())
 
 
     def training_step(self, batch, batch_idx):
+        '''
+        Training steps
+        '''
 
-        pass
+        device = self.get_device(batch)
+        epsilon = max(self.hparams.model.min_epsilon, self.hparams.model.max_epsilon - self.global_step + 1 / self.hparams.model.stop_decay)
+
+        # step through environment with agent
+        reward, done = self.agent.playStep(self.net, epsilon, device)
+        self.episode_reward += reward
+
+        # calculates training loss
+        loss = self.dqn_mse_loss(batch)
+
+        if done:
+            self.total_reward = self.episode_reward
+            self.episode_reward = 0
+
+        # Soft update of target network
+        if self.global_step % self.hparams.model.sync_rate == 0:
+            self.target_net.load_state_dict(self.net.state_dict())
+
+        log = {
+            'total_reward': torch.tensor(self.total_reward).to(device),
+            'reward': torch.tensor(reward).to(device),
+            'steps': torch.tensor(self.global_step).to(device)
+        }
+
+        return OrderedDict({'loss': loss, 'log': log, 'progress_bar': log})
+        
 
 
     def __dataloader(self) -> DataLoader:

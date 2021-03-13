@@ -82,6 +82,9 @@ class Drone:
         elif action == 5:
             quad_offset = (0, 0, -scaling_factor)
 
+        else:
+            quad_offset = (0, 0, 0)
+
         return quad_offset
 
 
@@ -110,12 +113,12 @@ class Drone:
         print(state_image.shape, state_signal_strength.shape)
         return {"image": state_image, "signal": state_signal_strength}
 
-    def getAction(self, net, device, populate):
+    def getAction(self, net, epsilon, device):
         '''
         Perform action
         '''
 
-        if np.random.random() < self.hparams.environment.agent.epsilon or populate:
+        if np.random.random() < epsilon:
             action = np.random.randint(self.hparams.model.actions)
         else:
             state_dict = self.getAgentState()
@@ -132,7 +135,7 @@ class Drone:
 
 
     @torch.no_grad()
-    def playStep(self, net, device, populate = 0):
+    def playStep(self, net, epsilon, device):
         '''
         Performs one step in the environment
 
@@ -146,7 +149,7 @@ class Drone:
         '''
 
 
-        action = self.getAction(net, device, populate)
+        action = self.getAction(net, epsilon, device)
         action_offset = self.nextAction(action)
         quad_state = self.client.getMultirotorState().kinematics_estimated.position
         quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
