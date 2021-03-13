@@ -1,9 +1,9 @@
 trainer:
-    gpus: -1
-    distributed_backend: "dp"
-    accumulate_grad_batches: 1
-    profiler: False
-    max_epochs: 50
+  gpus: -1
+  distributed_backend: "dp"
+  accumulate_grad_batches: 1
+  profiler: False
+  max_epochs: 50
 
 scheduler:
   type: MultiStepLR
@@ -25,7 +25,18 @@ environment:
     end:
       x: 100.0
       y:   0.0
-      z: 10.0
+      z:  10.0
+  quaternion:
+    start:
+      w_val: 1.0
+      x_val: 0.0
+      y_val: 0.0
+      z_val: 0.0
+    end:
+      w_val: 1.0
+      x_val: 0.0
+      y_val: 0.0
+      z_val: 0.0
   reward:
     goal: 1000
     collision: -100
@@ -34,11 +45,15 @@ environment:
     signal_strength_factor: 0.01
   agent:
     velocity_factor: 2
+    epsilon: 0.7
 
 dataset:
   loader:
     batch_size: 4
-    num_workers: 8
-    shuffle: False    
+    shuffle: False 
+    sampler: None   
 
-
+model:
+  replay_buffer_size: 50
+  in_channels: 3
+  actions: 6
