@@ -56,6 +56,8 @@ class AgentTrainer(pl.LightningModule):
         self.target_net = DQN(self.hparams.model.in_channels, self.hparams.model.actions)
 
         self.total_reward = 0.0
+        self.episode_steps = 0.0
+        self.max_episode_steps = 150
         self.episode_reward = 0.0
         self.populate(self.hparams.model.replay_buffer_size)
 
@@ -77,6 +79,7 @@ class AgentTrainer(pl.LightningModule):
         """
         states, actions, rewards, dones, next_states = batch
 
+        #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
         state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
 
@@ -87,6 +90,7 @@ class AgentTrainer(pl.LightningModule):
             next_state_values[dones] = 0.0
             next_state_values = next_state_values.detach()
 
+        #print(next_state_values.shape, "next shape")
         expected_state_action_values = next_state_values * self.hparams.model.gamma + rewards
 
         return nn.MSELoss()(state_action_values, expected_state_action_values)
@@ -101,12 +105,17 @@ class AgentTrainer(pl.LightningModule):
             print(i)
             self.agent.playStep(self.net, 1.0, self.get_device())
 
+            if i % self.max_episode_steps == 0:
+                self.agent.reset()
+
+        self.agent.reset()
 
     def training_step(self, batch, batch_idx):
         '''
         Training steps
         '''
 
+        self.episode_steps = self.episode_steps + 1
         device = self.get_device()
         epsilon = max(self.hparams.model.min_epsilon, self.hparams.model.max_epsilon - self.global_step + 1 / self.hparams.model.stop_decay)
 
@@ -117,9 +126,11 @@ class AgentTrainer(pl.LightningModule):
         # calculates training loss
         loss = self.dqn_mse_loss(batch)
 
+        self.log("train_loss", loss, on_epoch = True, prog_bar = True, on_step = True, logger = True)
         if done:
             self.total_reward = self.episode_reward
             self.episode_reward = 0
+            self.episode_steps = 0
 
         # Soft update of target network
         if self.global_step % self.hparams.model.sync_rate == 0:
@@ -130,9 +141,16 @@ class AgentTrainer(pl.LightningModule):
             'reward': torch.tensor(reward).to(device),
             'steps': torch.tensor(self.global_step).to(device)
         }
+        for key in log:
+            self.log(key, log[key], logger = True, prog_bar = True, on_step = True)
 
-        return OrderedDict({'loss': loss, 'log': log, 'progress_bar': log})
+        if self.episode_steps > self.max_episode_steps:
+            self.episode_steps = 0
+            self.total_reward = self.episode_reward
+            self.agent.reset()
 
+        #return OrderedDict({'loss': loss, 'log': log, 'progress_bar': log})
+        return loss
 
 
     def __dataloader(self) -> DataLoader:

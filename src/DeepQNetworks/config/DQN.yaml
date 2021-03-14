@@ -8,13 +8,13 @@ trainer:
 scheduler:
   type: MultiStepLR
   args: 
-    milestones: [15, 30] #[6, 8, 18]
+    milestones: [150, 500,750] #[6, 8, 18]
     gamma: 0.1
 
 optimizer:
   type: Adam
   args:
-    lr: 1e-3
+    lr: 1e-2
 
 environment:
   position:
@@ -23,7 +23,7 @@ environment:
       y:   0.0
       z: -10.0
     end:
-      x: 500.0
+      x: 100.0
       y:   0.0
       z: -10.0
   quaternion:
@@ -50,17 +50,18 @@ environment:
 dataset:
   loader:
     batch_size: 16
-    shuffle: False 
+    num_workers: 8
+    #shuffle: True
     #sampler: None   
 
 model:
-  replay_buffer_size: 200
+  replay_buffer_size: 1000
   in_channels: 3
   actions: 7
-  max_epsilon: 0.9
+  max_epsilon: 0.75
   min_epsilon: 0.1
   stop_decay: 1000
   sync_rate: 10
   gamma: 0.9
-  sample_size: 100
-  
+  sample_size: 500
+  thresh_dist: 10

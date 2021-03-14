@@ -23,6 +23,7 @@ class Drone:
         self.hparams = hparams
         self.start_position = start_position
         self.scaling_factor = velocity_factor
+        self.client = None
         self.reset()
 
     def initializeClient(self):
@@ -30,8 +31,11 @@ class Drone:
         Initializing airsim client
         '''
 
-        self.client = airsim.MultirotorClient()
-        self.client.confirmConnection()
+        if self.client is None:
+            self.client = airsim.MultirotorClient()
+            self.client.confirmConnection()
+        else:
+            self.client.reset()
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
 
@@ -53,7 +57,7 @@ class Drone:
 
         current_position = self.convertPositionToTensor(self.position.position)
         distance = self.sensor.getDistanceFromDestination(current_position)
-        if distance < self.scaling_factor:
+        if distance < self.hparams.model.thresh_dist:
             print("#"*100)
             print("Reached goal")
             return True
@@ -175,10 +179,11 @@ class Drone:
 
         new_state_dict = self.getAgentState()
         self.position = self.client.simGetVehiclePose()
+        print(self.position.position)
         # print(self.client.getMultirotorState().kinematics_estimated.position)
         if not done:
             reward = self.sensor.getReward(current_position)
-
+        print(reward)
         exp = Experience(state_dict, action, reward, done, new_state_dict)
         self.buffer.append(exp)
 
@@ -247,7 +252,7 @@ class Drone:
 
         # print("position, ", self.position)
         # Set init position
-        self.client.moveToPositionAsync(float(start[0, 0]),float(start[1, 0]),float(start[2, 0]), 5).join()
+        self.client.moveToPositionAsync(float(start[0, 0]),float(start[1, 0]),float(start[2, 0]), 10).join()
         self.client.moveByVelocityAsync(1, -0.67, -0.8, 5).join()
         #
         #self.client.simSetVehiclePose(self.position, True)
@@ -258,6 +263,7 @@ class Drone:
         #self.client.takeoffAsync().join()
         #time.sleep(0.5)
         self.position = self.client.simGetVehiclePose()
+        print(self.state, self.position)
         print("#" * 30)
         print("RESET")
 
