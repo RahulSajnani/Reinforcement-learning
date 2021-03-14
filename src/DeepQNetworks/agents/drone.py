@@ -111,7 +111,7 @@ class Drone:
 
         position = self.convertPositionToTensor(self.position.position)
         state_image = self.getImage()
-        state_signal_strength = self.sensor.getReward(position)
+        state_signal_strength = self.sensor.getSignalStrength(position)
 
         state_image = torch.tensor(state_image).permute(2, 0, 1).float()
         state_signal_strength = torch.tensor([state_signal_strength]).float()
