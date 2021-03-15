@@ -57,14 +57,14 @@ class AgentTrainer(pl.LightningModule):
 
         self.total_reward = 0.0
         self.episode_steps = 0.0
-        self.max_episode_steps = 150
+        self.max_episode_steps = self.hparams.model.max_episode
         self.episode_reward = 0.0
         self.populate(self.hparams.model.replay_buffer_size)
 
 
     def configure_optimizers(self):
 
-        optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.net.parameters())
+        optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.net.parameters(), **self.hparams.optimizer.args)
         scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
 
         return [optimizer], [scheduler]
