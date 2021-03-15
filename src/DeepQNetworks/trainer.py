@@ -117,7 +117,8 @@ class AgentTrainer(pl.LightningModule):
 
         self.episode_steps = self.episode_steps + 1
         device = self.get_device()
-        epsilon = max(self.hparams.model.min_epsilon, self.hparams.model.max_epsilon - self.global_step + 1 / self.hparams.model.stop_decay)
+        epsilon = max(self.hparams.model.min_epsilon, self.hparams.model.max_epsilon - (self.global_step + 1) / self.hparams.model.stop_decay)
+        print("eps:", epsilon)
 
         # step through environment with agent
         reward, done = self.agent.playStep(self.net, epsilon, device)
