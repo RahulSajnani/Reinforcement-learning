@@ -110,6 +110,16 @@ class AgentTrainer(pl.LightningModule):
 
         self.agent.reset()
 
+    def playTrajectory(self):
+        '''
+        Play the trajectory
+        '''
+        self.agent.reset()
+        device = self.get_device()
+        while (True):
+
+            self.agent.playStep(self.net, 0, device)
+
     def training_step(self, batch, batch_idx):
         '''
         Training steps
