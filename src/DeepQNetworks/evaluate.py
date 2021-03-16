@@ -1,5 +1,5 @@
 import sys, os
-from argparse import ArgumentParser
+import argparse
 import torch
 from models.DQN import DQN
 from dataset.RLdataset import *
@@ -21,7 +21,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", help = "path to model", required=True)
     args = parser.parse_args()
-    
+
     # Initialize model
     model = AgentTrainer.load_from_checkpoint(args.model).cuda()
     model.eval()
@@ -29,4 +29,4 @@ if __name__=="__main__":
     # Play trajectory
     model.playTrajectory()
 
-        
+
