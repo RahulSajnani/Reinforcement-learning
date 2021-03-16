@@ -40,7 +40,7 @@ environment:
   reward:
     goal: 1000
     collision: -100
-    factor: 0.1
+    factor: 0.001
   sensor:
     signal_strength_factor: 0.01
   agent:
