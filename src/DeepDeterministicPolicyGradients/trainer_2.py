@@ -79,7 +79,7 @@ class AgentTrainer(pl.LightningModule):
     def configure_optimizers(self):
 
         optimizer = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr * 10}], **self.hparams.optimizer.args)
-        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)("params":self.critic.parameters(), **self.hparams.optimizer.args)
+        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args)
         
         scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
         scheduler2 = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
