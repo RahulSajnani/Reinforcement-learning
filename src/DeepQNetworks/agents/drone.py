@@ -169,7 +169,7 @@ class Drone:
             quad_vel.x_val + action_offset[0],
             quad_vel.y_val + action_offset[1],
             quad_vel.z_val + action_offset[2],
-            1,
+            0.5,
         ).join()
         #time.sleep(0.5)
 
