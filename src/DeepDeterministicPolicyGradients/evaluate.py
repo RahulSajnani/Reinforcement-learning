@@ -1,5 +1,5 @@
 import sys, os
-from argparse import ArgumentParser
+import argparse
 import torch
 from models.DQN import DQN
 from dataset.RLdataset import *

@@ -30,7 +30,7 @@ class HeatSensor:
         '''
 
         distance = self.getDistanceFromDestination(position)
-        signal = torch.tensor([[ 1 / (self.strength_factor * distance + 0.1)]])
+        signal = torch.tensor([[ 1 / (self.strength_factor * distance + 1)]])
 
         print(signal, "signal")
         return signal
