@@ -129,14 +129,15 @@ class Drone:
 
         if np.random.random() < epsilon:
             action = np.random.randint(self.hparams.model.actions)
+            action = self.nextAction(action)
         else:
             state_dict = self.getAgentState()
 
             if device not in ['cpu']:
                 for key in state_dict:
                     state_dict[key] = state_dict[key].cuda(device)
-            
-            action = self.net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().numpy().squeeze()
+
+            action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
             action = (action[0], action[1], action[2])
             # q_values = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0))
             # _, action = torch.max(q_values, dim = 1)
@@ -186,7 +187,7 @@ class Drone:
         if not done:
             reward = self.sensor.getReward(current_position)
         print(reward)
-        exp = Experience(state_dict, action, reward, done, new_state_dict)
+        exp = Experience(state_dict, action_offset, reward, done, new_state_dict)
         self.buffer.append(exp)
 
         if done:

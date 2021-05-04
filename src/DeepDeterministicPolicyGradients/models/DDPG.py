@@ -88,13 +88,13 @@ class Actor(nn.Module):
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
         self.init_weights(init_w)
-    
+
     def init_weights(self, init_w):
-        
+
         self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
         self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
         self.fc3.weight.data.uniform_(-init_w, init_w)
-    
+
     def forward(self, x, x_sensor):
 
         x = self.pool(F.relu(self.conv1(x)))
@@ -105,7 +105,7 @@ class Actor(nn.Module):
         x = torch.hstack((x, x_sensor))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-    
+
         return self.tanh(self.fc3(x))
 
 class Critic(nn.Module):
@@ -120,25 +120,28 @@ class Critic(nn.Module):
 
         self.fc1 = nn.Linear(2881 + action_dim, 512)
         self.fc2 = nn.Linear(512, 64)
-        self.fc3 = nn.Linear(64, action_dim)
+        self.fc3 = nn.Linear(64, 1)
 
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
         self.init_weights(init_w)
-    
+
     def init_weights(self, init_w):
         self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
         self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())
         self.fc3.weight.data.uniform_(-init_w, init_w)
-    
+
     def forward(self, x, x_sensor, action):
-        
+
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
 
         x = x.view(x.size(0), -1)
-        out = self.fc1(torch.cat([x, x_sensor, action], 1))
+        #print(x.shape, x_sensor.shape, action.shape)
+        out = torch.cat([x, x_sensor, action], 1)
+        #print(out.shape)
+        out = self.fc1(out)
         out = self.relu(out)
         out = self.fc2(out)
         out = self.relu(out)
@@ -189,9 +192,9 @@ if __name__=="__main__":
     x_action = torch.randn(2, 3)
 
     actor = Actor()
-    critic = Critic()
+    critic = Critic(action_dim = 3)
     x_action = actor(x, x_sensor)
-    
+
     out = critic(x, x_sensor, x_action)
     # net = DQN(3, 6)
     # out = net(x, x_sensor)

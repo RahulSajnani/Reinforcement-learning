@@ -56,9 +56,9 @@ class AgentTrainer(pl.LightningModule):
         self.target_net = Actor(**self.hparams.model.actor)
 
         # Critic networks
-        self.critic = Critic(**self.hparams.model.actor)
-        self.target_critic = Critic(**self.hparams.model.actor)
-       
+        self.critic = Critic(**self.hparams.model.critic)
+        self.target_critic = Critic(**self.hparams.model.critic)
+
         # Hard update
         self.target_net.load_state_dict(self.net.state_dict())
         self.target_critic.load_state_dict(self.critic.state_dict())
@@ -78,7 +78,7 @@ class AgentTrainer(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer = getattr(torch.optim, self.hparams.optimizer.type)([self.net.parameters(), self.critic.parameters()], **self.hparams.optimizer.args)
+        optimizer = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters()}, {"params":self.critic.parameters()}], **self.hparams.optimizer.args)
         scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
 
         return [optimizer], [scheduler]
@@ -97,16 +97,18 @@ class AgentTrainer(pl.LightningModule):
         # print(states["image"].shape)
         # state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
         action_value = self.net(next_states["image"], next_states["signal"])
-        Q_value = self.critic(next_states["image"], next_states["signal"], next_action_value)
+        Q_value = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
 
         # print(state_action_values)
 
         with torch.no_grad():
 
-            
+
             next_action_value = self.target_net(next_states["image"], next_states["signal"])
-            next_Q_value = self.target_critic(next_states["image"], next_states["signal"], next_action_value)
+            #print(next_action_value.shape, "action")
+            next_Q_value = self.target_critic(next_states["image"], next_states["signal"], next_action_value).squeeze(-1)
             # next_state_values[dones] = 0.0
+            #print("Q value:", next_Q_value.shape)
             next_action_value = next_action_value.detach()
             next_Q_value = next_Q_value.detach()
 
@@ -158,7 +160,7 @@ class AgentTrainer(pl.LightningModule):
         loss = self.dqn_mse_loss(batch)
 
         self.log("train_loss", loss, on_epoch = True, prog_bar = True, on_step = True, logger = True)
-        
+
         if done:
             self.total_reward = self.episode_reward
             self.episode_reward = 0
@@ -166,7 +168,7 @@ class AgentTrainer(pl.LightningModule):
 
         # Soft update of target network
         if self.global_step % self.hparams.model.sync_rate == 0:
-            
+
             self.soft_update(self.target_net, self.net, self.hparams.model.tau)
             self.soft_update(self.target_critic, self.critic, self.hparams.model.tau)
 
