@@ -80,7 +80,7 @@ class AgentTrainer(pl.LightningModule):
 
         optimizer = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr * 10}], **self.hparams.optimizer.args)
         optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args)
-        
+
         scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
         scheduler2 = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
 
@@ -99,7 +99,7 @@ class AgentTrainer(pl.LightningModule):
         #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
         # state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
-        
+
         action_value = self.net(next_states["image"], next_states["signal"])
         Q_value = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
 
@@ -113,7 +113,7 @@ class AgentTrainer(pl.LightningModule):
             next_action_value = next_action_value.detach()
             next_Q_value = next_Q_value.detach()
 
-           
+
         #print(next_state_values.shape, "next shape")
         expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards
 
@@ -145,7 +145,7 @@ class AgentTrainer(pl.LightningModule):
 
             self.agent.playStep(self.net, 0, device)
 
-    def training_step(self, batch, batch_idx, optim_idx):
+    def training_step(self, batch, batch_idx, optimizer_idx):
         '''
         Training steps
         '''
@@ -161,7 +161,7 @@ class AgentTrainer(pl.LightningModule):
 
         # calculates training loss
         loss = self.dqn_mse_loss(batch)
-        
+
         self.log("train_loss", loss["loss"], on_epoch = True, prog_bar = True, on_step = True, logger = True)
         self.log("policy_loss", loss["policy_loss"], on_epoch = True, prog_bar = True, on_step = True, logger = True)
 
@@ -171,7 +171,7 @@ class AgentTrainer(pl.LightningModule):
             self.episode_steps = 0
 
 
-        if optim_idx:
+        if optimizer_idx:
             loss_out = loss["loss"]
         else:
             loss_out = loss["policy_loss"]
