@@ -78,7 +78,7 @@ class AgentTrainer(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters()}, {"params":self.critic.parameters()}], **self.hparams.optimizer.args)
+        optimizer = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr * 10}, {"params":self.critic.parameters()}], **self.hparams.optimizer.args)
         scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
 
         return [optimizer], [scheduler]
@@ -112,10 +112,12 @@ class AgentTrainer(pl.LightningModule):
             next_action_value = next_action_value.detach()
             next_Q_value = next_Q_value.detach()
 
+            #Q_value_actor = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
+
         #print(next_state_values.shape, "next shape")
         expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards
 
-        return nn.MSELoss()(Q_value, expected_state_action_values) - Q_value.mean()
+        return nn.MSELoss()(Q_value, expected_state_action_values) - (Q_value).mean()
 
     def populate(self, steps: int = 1000) -> None:
         '''

@@ -65,7 +65,7 @@ model:
     in_channels: 3
     action_dim: 3
     init_w: 3e-3
-  tau: 0.001
+  tau: 0.1
   replay_buffer_size: 200
   in_channels: 3
   actions: 6
