@@ -20,6 +20,8 @@ class HeatSensor:
         self.source_position = source_position
         self.strength_factor = strength_factor
         self.reward_factor   = reward_factor
+        self.max_distance = 5000
+
 
     def getSignalStrength(self, position):
         '''
@@ -50,7 +52,9 @@ class HeatSensor:
         '''
 
         distance = self.getDistanceFromDestination(position)
-        reward   = self.reward_factor * (- distance)
+        # reward   = self.reward_factor * (- distance)
+        reward = - (distance / self.max_distance)**(0.4)
+        
         reward   = torch.tensor([[reward]])
 
         return reward
