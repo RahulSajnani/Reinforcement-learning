@@ -20,7 +20,8 @@ def conv_block(in_channels, out_channels, kernel, padding):
             nn.Conv2d(in_channels, out_channels, kernel, padding=padding, bias = False),
             nn.InstanceNorm2d(out_channels),
             #nn.BatchNorm2d(out_channels),
-            nn.ELU(inplace=False),
+            #nn.ELU(inplace=False),
+            nn.LeakyReLU(inplace=True)
         )
 
 
@@ -122,7 +123,7 @@ class Critic(nn.Module):
         self.fc2 = nn.Linear(512, 64)
         self.fc3 = nn.Linear(64, 1)
 
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU()
         self.tanh = nn.Tanh()
         self.init_weights(init_w)
 

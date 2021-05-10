@@ -63,7 +63,7 @@ class AgentTrainer(pl.LightningModule):
         self.target_net.load_state_dict(self.net.state_dict())
         self.target_critic.load_state_dict(self.critic.state_dict())
 
-        self.total_reward = 0.0
+        self.total_reward = -10000
         self.episode_steps = 0.0
         self.max_episode_steps = self.hparams.model.max_episode
         self.episode_reward = 0.0
@@ -78,11 +78,11 @@ class AgentTrainer(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr * 10}], **self.hparams.optimizer.args)
-        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args)
+        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr / 2}], **self.hparams.optimizer.args)
+        optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args)
 
-        scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
         scheduler2 = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
+        scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
 
         return [optimizer, optimizer2], [scheduler, scheduler2]
 
@@ -166,15 +166,17 @@ class AgentTrainer(pl.LightningModule):
         self.log("policy_loss", loss["policy_loss"], on_epoch = True, prog_bar = True, on_step = True, logger = True)
 
         if done:
-            self.total_reward = self.episode_reward
+            if self.episode_reward > self.total_reward:
+                self.total_reward = self.episode_reward
+
             self.episode_reward = 0
             self.episode_steps = 0
 
 
         if optimizer_idx:
-            loss_out = loss["loss"]
-        else:
             loss_out = loss["policy_loss"]
+        else:
+            loss_out = loss["loss"]
 
         # Soft update of target network
         if self.global_step % self.hparams.model.sync_rate == 0:
