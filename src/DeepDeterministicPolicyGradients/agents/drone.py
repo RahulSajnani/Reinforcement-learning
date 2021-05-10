@@ -9,6 +9,31 @@ from PIL import Image
 
 Experience = namedtuple('Experience', field_names=['state', 'action', 'reward', 'done', 'new_state'])
 
+class OUNoise:
+    '''
+    Noise model for RL agent
+    '''
+    def __init__(self, action_dimension, dt=0.01, mu=0, theta=0.15, sigma=0.2):
+        
+        self.action_dimension = action_dimension
+        self.dt = dt
+        self.mu = mu
+        self.theta = theta
+        self.sigma = sigma
+        self.reset()
+
+    def reset(self):
+        self.state = np.ones(self.action_dimension) * self.mu
+
+    def noise(self):
+        
+        x = self.state
+        dx = self.theta * (self.mu - x) * self.dt + self.sigma * np.random.randn(len(x)) * np.sqrt(self.dt)
+        self.state = x + dx
+        
+        return self.state
+
+
 class Drone:
     '''
     Drone class
@@ -24,6 +49,7 @@ class Drone:
         self.start_position = start_position
         self.scaling_factor = velocity_factor
         self.client = None
+        self.noise = OUNoise(action_dimension = 3)
         self.reset()
 
     def initializeClient(self):
@@ -126,23 +152,21 @@ class Drone:
         '''
         Perform action
         '''
+        if device not in ['cpu']:
+            for key in state_dict:
+                state_dict[key] = state_dict[key].cuda(device)
 
+        action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
         if np.random.random() < epsilon:
-            action = np.random.randint(self.hparams.model.actions)
-            action = self.nextAction(action)
-        else:
-            state_dict = self.getAgentState()
-
-            if device not in ['cpu']:
-                for key in state_dict:
-                    state_dict[key] = state_dict[key].cuda(device)
-
-            action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
             action = (action[0], action[1], action[2])
-            # q_values = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0))
-            # _, action = torch.max(q_values, dim = 1)
-            # action = int(action.item())
+            noise_out = self.noise.noise()
+            action[0] = np.clip(action[0] + noise_out[0], -1, 1)
+            action[1] = np.clip(action[1] + noise_out[1], -1, 1)
+            action[2] = np.clip(action[2] + noise_out[2], -1, 1)
 
+        else:
+            action = (action[0], action[1], action[2])
+       
         return action
 
 
