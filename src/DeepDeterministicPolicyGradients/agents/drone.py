@@ -14,7 +14,7 @@ class OUNoise:
     Noise model for RL agent
     '''
     def __init__(self, action_dimension, dt=0.01, mu=0, theta=0.15, sigma=0.2):
-        
+
         self.action_dimension = action_dimension
         self.dt = dt
         self.mu = mu
@@ -26,11 +26,11 @@ class OUNoise:
         self.state = np.ones(self.action_dimension) * self.mu
 
     def noise(self):
-        
+
         x = self.state
         dx = self.theta * (self.mu - x) * self.dt + self.sigma * np.random.randn(len(x)) * np.sqrt(self.dt)
         self.state = x + dx
-        
+
         return self.state
 
 
@@ -152,21 +152,20 @@ class Drone:
         '''
         Perform action
         '''
+        state_dict = self.getAgentState()
+
         if device not in ['cpu']:
             for key in state_dict:
                 state_dict[key] = state_dict[key].cuda(device)
 
         action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
         if np.random.random() < epsilon:
-            action = (action[0], action[1], action[2])
+            action_out = (action[0], action[1], action[2])
             noise_out = self.noise.noise()
-            action[0] = np.clip(action[0] + noise_out[0], -1, 1)
-            action[1] = np.clip(action[1] + noise_out[1], -1, 1)
-            action[2] = np.clip(action[2] + noise_out[2], -1, 1)
-
+            action = (np.clip(action_out[0] + noise_out[0], -1, 1), np.clip(action_out[1] + noise_out[1], -1, 1), np.clip(action_out[2] + noise_out[2], -1, 1))
         else:
             action = (action[0], action[1], action[2])
-       
+
         return action
 
 
