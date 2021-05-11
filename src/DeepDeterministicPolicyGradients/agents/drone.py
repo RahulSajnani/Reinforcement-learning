@@ -328,7 +328,7 @@ class Drone:
 
         pose_params = self.hparams.environment
         start = self.start_position.numpy()
-
+        self.noise.reset()
         # Set initial pose
         self.position.position.x_val = float(start[0, 0])
         self.position.position.y_val = float(start[1, 0])
