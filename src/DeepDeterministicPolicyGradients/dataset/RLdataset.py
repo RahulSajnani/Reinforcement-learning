@@ -37,9 +37,9 @@ class ReplayBuffer:
 
         return (
             np.array(states),
-            np.array(actions),
-            np.array(rewards, dtype=np.float32),
-            np.array(dones, dtype=np.bool),
+            actions,
+            rewards,
+            dones,
             np.array(next_states),
         )
 

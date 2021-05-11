@@ -93,6 +93,7 @@ class AgentTrainer(pl.LightningModule):
         """
         states, actions, rewards, dones, next_states = batch
 
+        rewards_out = rewards[:, -1]
         #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
         # state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
@@ -115,7 +116,7 @@ class AgentTrainer(pl.LightningModule):
             #Q_value_actor = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
 
         #print(next_state_values.shape, "next shape")
-        expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards
+        expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards_out
 
         return nn.MSELoss()(Q_value, expected_state_action_values) - (Q_value).mean()
 

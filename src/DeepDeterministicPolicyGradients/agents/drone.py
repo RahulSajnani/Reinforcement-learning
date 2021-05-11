@@ -50,8 +50,8 @@ class Drone:
         self.scaling_factor = velocity_factor
         self.client = None
         self.noise = OUNoise(action_dimension = 3)
-        self.reset()
         self.num_batch = 3
+        self.reset()
         self.previous_states = deque(maxlen=self.num_batch)
 
     def initializeClient(self):
@@ -82,20 +82,20 @@ class Drone:
         '''
         Batch state dictionaries into one
         '''
-        
+
         states, actions, rewards, dones, next_states = exp
 
         self.previous_states.append(exp)
-        len_buffer = len(self.previous_states):
-        
+        len_buffer = len(self.previous_states)
+
 
         if len_buffer < self.num_batch:
             image_zero = torch.zeros_like(states["image"])
             signal_zero = torch.zeros_like(states["signal"])
-            action_zero = torch.zeros_like(action)
+            action_zero = torch.zeros_like(actions)
             rewards_zero = torch.zeros_like(torch.tensor([rewards]))
             dones_zero = torch.zeros_like(torch.tensor([dones]))
-        
+
         image_batch = []
         signal_batch = []
         action_batch = []
@@ -107,6 +107,7 @@ class Drone:
         for i in range(self.num_batch):
 
             if i < self.num_batch - len_buffer:
+                print("zeros")
                 image_batch.append(image_zero)
                 signal_batch.append(signal_zero)
                 action_batch.append(action_zero)
@@ -118,22 +119,22 @@ class Drone:
                 index = i - (self.num_batch - len_buffer)
                 exp_old = self.previous_states[index]
                 states_old, actions_old, rewards_old, dones_old, next_states_old = exp_old
-                image_batch.append(states_old["image"]))
+                image_batch.append(states_old["image"])
                 signal_batch.append(states_old["signal"])
                 action_batch.append(actions_old)
-                dones_batch.append(dones_old)
-                rewards_batch.append(rewards_old)
+                dones_batch.append(torch.tensor([dones_old]))
+                rewards_batch.append(torch.tensor([rewards_old]))
                 new_image_batch.append(next_states_old["image"])
                 new_signal_batch.append(next_states_old["signal"])
-        
+
         state_out = {"image": torch.cat(image_batch, dim = 0), "signal":torch.cat(signal_batch, dim = 0)}
-        
+
         action_out = torch.cat(action_batch, dim = 0)
         dones_out = torch.cat(dones_batch, dim = 0)
         rewards_out = torch.cat(rewards_batch, dim = 0)
         next_state_out = {"image": torch.cat(new_image_batch, dim = 0), "signal": torch.cat(new_signal_batch, dim = 0)}
-        
-        exp_out = Experience(state=state_out, action = action_out, reward = reward_out, done = dones_out, new_state = next_state_out)
+
+        exp_out = Experience(state=state_out, action = action_out, reward = rewards_out, done = dones_out, new_state = next_state_out)
 
         return exp_out
 
@@ -214,11 +215,15 @@ class Drone:
         Perform action
         '''
         state_dict = self.getAgentState()
+        exp_out = Experience(state=state_dict, action = state_dict["signal"], reward = state_dict["signal"], done = state_dict["signal"], new_state = state_dict)
+        exp = self.batchStates(exp_out)
+        state_dict, _, _, _, _ = exp
 
         if device not in ['cpu']:
             for key in state_dict:
                 state_dict[key] = state_dict[key].cuda(device)
 
+        #print(state_dict["image"].shape,state_dict["signal"].shape )
         action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
         if np.random.random() < epsilon:
             action_out = torch.tensor([action[0], action[1], action[2]])
@@ -251,11 +256,11 @@ class Drone:
         quad_vel = self.client.getMultirotorState().kinematics_estimated.linear_velocity
 
         state_dict = self.getAgentState()
-        # print(action_offset, quad_state)
+        #print(action_offset, quad_state)
         self.client.moveByVelocityAsync(
-            quad_vel.x_val + action_offset[0],
-            quad_vel.y_val + action_offset[1],
-            quad_vel.z_val + action_offset[2],
+            quad_vel.x_val + action_offset[0].numpy(),
+            quad_vel.y_val + action_offset[1].numpy(),
+            quad_vel.z_val + action_offset[2].numpy(),
             0.5,
         ).join()
         #time.sleep(0.5)
@@ -276,7 +281,7 @@ class Drone:
         # exp = Experience(state_dict, action_offset, reward, done, new_state_dict)
         exp_out = Experience(state_dict, action_offset, reward, done, new_state_dict)
         exp = self.batchStates(exp_out)
-        
+
         self.buffer.append(exp)
 
         if done:
@@ -328,6 +333,8 @@ class Drone:
 
         self.initializeClient()
         self.position = self.client.simGetVehiclePose()
+
+        self.previous_states = deque(maxlen=self.num_batch)
 
         pose_params = self.hparams.environment
         start = self.start_position.numpy()

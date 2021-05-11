@@ -82,7 +82,7 @@ class Actor(nn.Module):
 
         self.pool = nn.MaxPool2d(3)
 
-        self.fc1 = nn.Linear(2881, 512)
+        self.fc1 = nn.Linear(2880 + in_channels // 3, 512)
         self.fc2 = nn.Linear(512, 64)
         self.fc3 = nn.Linear(64, action_dim)
 
@@ -98,11 +98,13 @@ class Actor(nn.Module):
 
     def forward(self, x, x_sensor):
 
+        #print(x.shape)
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
 
         x = x.view(x.size(0), -1)
+        #print(x.shape)
         x = torch.hstack((x, x_sensor))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -119,7 +121,7 @@ class Critic(nn.Module):
 
         self.pool = nn.MaxPool2d(3)
 
-        self.fc1 = nn.Linear(2881 + action_dim, 512)
+        self.fc1 = nn.Linear(2880 + in_channels // 3 + action_dim, 512)
         self.fc2 = nn.Linear(512, 64)
         self.fc3 = nn.Linear(64, 1)
 

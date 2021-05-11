@@ -58,11 +58,11 @@ dataset:
 
 model:
   actor:
-    in_channels: 3
+    in_channels: 9
     action_dim: 3
     init_w: 3e-3
   critic:
-    in_channels: 3
+    in_channels: 9
     action_dim: 3
     init_w: 3e-3
   tau: 0.005
@@ -74,7 +74,7 @@ model:
   stop_decay: 10000
   sync_rate: 30
   gamma: 0.99
-  sample_size: 150
+  sample_size: 100
   thresh_dist: 10
   max_episode: 80
 
