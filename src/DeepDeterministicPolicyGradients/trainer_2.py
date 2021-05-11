@@ -96,10 +96,10 @@ class AgentTrainer(pl.LightningModule):
         """
         states, actions, rewards, dones, next_states = batch
 
+        rewards_out = rewards[:, -1]
         #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
         # state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
-
         action_value = self.net(next_states["image"], next_states["signal"])
         Q_value = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
 
@@ -109,16 +109,19 @@ class AgentTrainer(pl.LightningModule):
 
 
             next_action_value = self.target_net(next_states["image"], next_states["signal"])
+            #print(next_action_value.shape, "action")
             next_Q_value = self.target_critic(next_states["image"], next_states["signal"], next_action_value).squeeze(-1)
+            # next_state_values[dones] = 0.0
+            #print("Q value:", next_Q_value.shape)
             next_action_value = next_action_value.detach()
             next_Q_value = next_Q_value.detach()
 
+            #Q_value_actor = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
 
         #print(next_state_values.shape, "next shape")
-        expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards
+        expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards_out
 
-        loss_dict = {"loss": nn.MSELoss()(Q_value, expected_state_action_values), "policy_loss": - (Q_value).mean()}
-        return  loss_dict
+        return nn.MSELoss()(Q_value, expected_state_action_values) - (Q_value).mean()
 
     def populate(self, steps: int = 1000) -> None:
         '''
