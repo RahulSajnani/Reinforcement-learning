@@ -51,6 +51,8 @@ class Drone:
         self.client = None
         self.noise = OUNoise(action_dimension = 3)
         self.reset()
+        self.num_batch = 3
+        self.previous_states = deque(maxlen=self.num_batch)
 
     def initializeClient(self):
         '''
@@ -75,6 +77,65 @@ class Drone:
             return True
         else:
             return False
+
+    def batchStates(self, exp):
+        '''
+        Batch state dictionaries into one
+        '''
+        
+        states, actions, rewards, dones, next_states = exp
+
+        self.previous_states.append(exp)
+        len_buffer = len(self.previous_states):
+        
+
+        if len_buffer < self.num_batch:
+            image_zero = torch.zeros_like(states["image"])
+            signal_zero = torch.zeros_like(states["signal"])
+            action_zero = torch.zeros_like(action)
+            rewards_zero = torch.zeros_like(torch.tensor([rewards]))
+            dones_zero = torch.zeros_like(torch.tensor([dones]))
+        
+        image_batch = []
+        signal_batch = []
+        action_batch = []
+        dones_batch = []
+        rewards_batch = []
+        new_signal_batch = []
+        new_image_batch = []
+
+        for i in range(self.num_batch):
+
+            if i < self.num_batch - len_buffer:
+                image_batch.append(image_zero)
+                signal_batch.append(signal_zero)
+                action_batch.append(action_zero)
+                dones_batch.append(dones_zero)
+                rewards_batch.append(rewards_zero)
+                new_image_batch.append(image_zero)
+                new_signal_batch.append(signal_zero)
+            else:
+                index = i - (self.num_batch - len_buffer)
+                exp_old = self.previous_states[index]
+                states_old, actions_old, rewards_old, dones_old, next_states_old = exp_old
+                image_batch.append(states_old["image"]))
+                signal_batch.append(states_old["signal"])
+                action_batch.append(actions_old)
+                dones_batch.append(dones_old)
+                rewards_batch.append(rewards_old)
+                new_image_batch.append(next_states_old["image"])
+                new_signal_batch.append(next_states_old["signal"])
+        
+        state_out = {"image": torch.cat(image_batch, dim = 0), "signal":torch.cat(signal_batch, dim = 0)}
+        
+        action_out = torch.cat(action_batch, dim = 0)
+        dones_out = torch.cat(dones_batch, dim = 0)
+        rewards_out = torch.cat(rewards_batch, dim = 0)
+        next_state_out = {"image": torch.cat(new_image_batch, dim = 0), "signal": torch.cat(new_signal_batch, dim = 0)}
+        
+        exp_out = Experience(state=state_out, action = action_out, reward = reward_out, done = dones_out, new_state = next_state_out)
+
+        return exp_out
 
     def hasReachedGoal(self):
         '''
@@ -160,11 +221,11 @@ class Drone:
 
         action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
         if np.random.random() < epsilon:
-            action_out = (action[0], action[1], action[2])
+            action_out = torch.tensor([action[0], action[1], action[2]])
             noise_out = self.noise.noise()
-            action = (np.clip(action_out[0] + noise_out[0], -1, 1), np.clip(action_out[1] + noise_out[1], -1, 1), np.clip(action_out[2] + noise_out[2], -1, 1))
+            action = torch.tensor([np.clip(action_out[0] + noise_out[0], -1, 1), np.clip(action_out[1] + noise_out[1], -1, 1), np.clip(action_out[2] + noise_out[2], -1, 1)])
         else:
-            action = (action[0], action[1], action[2])
+            action = torch.tensor([action[0], action[1], action[2]])
 
         return action
 
@@ -210,7 +271,12 @@ class Drone:
         if not done:
             reward = self.sensor.getReward(current_position)
         print(reward)
-        exp = Experience(state_dict, action_offset, reward, done, new_state_dict)
+
+        # exp = batchStates(state_dict, action_offset, reward, done, new_state_dict)
+        # exp = Experience(state_dict, action_offset, reward, done, new_state_dict)
+        exp_out = Experience(state_dict, action_offset, reward, done, new_state_dict)
+        exp = self.batchStates(exp_out)
+        
         self.buffer.append(exp)
 
         if done:
@@ -228,12 +294,12 @@ class Drone:
         # Either reached goal or collided
         if self.hasReachedGoal():
             reward = self.hparams.environment.reward.goal
-            done = True
+            done = 1
         elif self.hasCollided():
             reward = self.hparams.environment.reward.collision
-            done = True
+            done = 1
         else:
-            done = False
+            done = 0
 
         return done, reward
 

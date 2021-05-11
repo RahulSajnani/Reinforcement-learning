@@ -55,7 +55,7 @@ class HeatSensor:
         # reward   = self.reward_factor * (- distance)
         reward = -(distance / self.max_distance)**(0.4)
 
-        reward   = torch.tensor([[reward]])
+        reward   = torch.tensor([reward])
 
         return reward
 
