@@ -78,7 +78,7 @@ class AgentTrainer(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr / 2}], **self.hparams.optimizer.args)
+        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr / 20}], **self.hparams.optimizer.args)
         optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args)
 
         scheduler2 = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
@@ -98,6 +98,7 @@ class AgentTrainer(pl.LightningModule):
 
         #print(states["image"].shape, rewards.shape)
         rewards_out = rewards[:, -1]
+        print(actions.shape)
         #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
         # state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
@@ -109,20 +110,20 @@ class AgentTrainer(pl.LightningModule):
         with torch.no_grad():
 
 
-            next_action_value = self.target_net(next_states["image"], next_states["signal"])
+            #next_action_value = self.target_net(next_states["image"], next_states["signal"])
             #print(next_action_value.shape, "action")
-            next_Q_value = self.target_critic(next_states["image"], next_states["signal"], next_action_value).squeeze(-1)
+            next_Q_value = self.target_critic(states["image"], states["signal"], actions.float()).squeeze(-1)
             # next_state_values[dones] = 0.0
             #print("Q value:", next_Q_value.shape)
-            next_action_value = next_action_value.detach()
+            #next_action_value = next_action_value.detach()
             next_Q_value = next_Q_value.detach()
 
             #Q_value_actor = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
 
         #print(next_Q_value.shape, rewards_out.shape)
-        expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards_out
+        expected_state_action_values = Q_value * self.hparams.model.gamma + rewards_out
         #print(expected_state_action_values.shape, Q_value.shape)
-        return {"loss": nn.MSELoss()(Q_value, expected_state_action_values), "policy_loss": - (Q_value).mean()}
+        return {"loss": nn.MSELoss()(next_Q_value, expected_state_action_values), "policy_loss": - (Q_value).mean()}
 
     def populate(self, steps: int = 1000) -> None:
         '''
