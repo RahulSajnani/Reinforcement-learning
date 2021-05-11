@@ -67,7 +67,6 @@ class AgentTrainer(pl.LightningModule):
         self.episode_steps = 0.0
         self.max_episode_steps = self.hparams.model.max_episode
         self.episode_reward = 0.0
-        self.populate(self.hparams.model.replay_buffer_size)
 
 
     def soft_update(self, target, source, tau):
@@ -78,7 +77,7 @@ class AgentTrainer(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr / 20}], **self.hparams.optimizer.args)
+        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr / 2}], **self.hparams.optimizer.args)
         optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args)
 
         scheduler2 = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
@@ -112,7 +111,7 @@ class AgentTrainer(pl.LightningModule):
 
             #next_action_value = self.target_net(next_states["image"], next_states["signal"])
             #print(next_action_value.shape, "action")
-            next_Q_value = self.target_critic(states["image"], states["signal"], actions.float()).squeeze(-1)
+            next_Q_value = self.target_critic(states["image"], states["signal"], actions.long()).squeeze(-1)
             # next_state_values[dones] = 0.0
             #print("Q value:", next_Q_value.shape)
             #next_action_value = next_action_value.detach()
@@ -213,7 +212,7 @@ class AgentTrainer(pl.LightningModule):
         """
         Initialize the Replay Buffer dataset used for retrieving experiences
         """
-
+        self.populate(self.hparams.model.replay_buffer_size)
         dataset = RLDataset(self.replay_buffer, self.hparams.model.sample_size)
         dataloader = DataLoader(
             dataset=dataset,

@@ -50,7 +50,7 @@ class Drone:
         self.scaling_factor = velocity_factor
         self.client = None
         self.noise = OUNoise(action_dimension = 3)
-        self.num_batch = 3
+        self.num_batch = self.hparams.environment.agent.num_batch
         self.reset()
         self.previous_states = deque(maxlen=self.num_batch)
 
@@ -191,8 +191,8 @@ class Drone:
         state_image = self.getImage()
         state_signal_strength = self.sensor.getSignalStrength(position)
 
-        state_image = torch.tensor(state_image).permute(2, 0, 1).float()
-        state_signal_strength = torch.tensor([state_signal_strength]).float()
+        state_image = torch.tensor(state_image).permute(2, 0, 1).long()
+        state_signal_strength = torch.tensor([state_signal_strength]).long()
 
         #print(state_image.max())
         state_image = state_image / 255.0
@@ -288,10 +288,10 @@ class Drone:
 
         # Either reached goal or collided
         if self.hasReachedGoal():
-            reward = self.hparams.environment.reward.goal
+            reward = torch.tensor([self.hparams.environment.reward.goal])
             done = 1
         elif self.hasCollided():
-            reward = self.hparams.environment.reward.collision
+            reward = torch.tensor([self.hparams.environment.reward.collision])
             done = 1
         else:
             done = 0
