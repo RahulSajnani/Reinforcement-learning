@@ -87,7 +87,7 @@ class Drone:
 
         self.previous_states.append(exp)
         len_buffer = len(self.previous_states)
-        print("action", actions.shape)
+        #print("action in agent", actions.shape)
 
         if len_buffer < self.num_batch:
             image_zero = torch.zeros_like(states["image"])
@@ -104,7 +104,7 @@ class Drone:
         for i in range(self.num_batch):
 
             if i < self.num_batch - len_buffer:
-                print("zeros")
+                #print("zeros")
                 image_batch.append(image_zero)
                 signal_batch.append(signal_zero)
                 new_image_batch.append(image_zero)
@@ -124,7 +124,7 @@ class Drone:
 
         next_state_out = {"image": torch.cat(new_image_batch, dim = 0), "signal": torch.cat(new_signal_batch, dim = 0)}
 
-        exp_out = Experience(state=state_out, action = actions, reward = rewards, done = dones, new_state = next_state_out)
+        exp_out = Experience(state=state_out, action = actions, reward = torch.tensor([rewards]), done = torch.tensor([dones]), new_state = next_state_out)
 
         return exp_out
 

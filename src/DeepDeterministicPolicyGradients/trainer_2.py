@@ -98,7 +98,7 @@ class AgentTrainer(pl.LightningModule):
 
         #print(states["image"].shape, rewards.shape)
         rewards_out = rewards[:, -1]
-        print(actions.shape)
+        print(actions.shape, rewards_out.shape, rewards.shape, "shapes")
         #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
         # state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
