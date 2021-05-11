@@ -96,6 +96,7 @@ class AgentTrainer(pl.LightningModule):
         """
         states, actions, rewards, dones, next_states = batch
 
+        #print(states["image"].shape, rewards.shape)
         rewards_out = rewards[:, -1]
         #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
@@ -118,10 +119,10 @@ class AgentTrainer(pl.LightningModule):
 
             #Q_value_actor = self.critic(next_states["image"], next_states["signal"], action_value).squeeze(-1)
 
-        #print(next_state_values.shape, "next shape")
+        #print(next_Q_value.shape, rewards_out.shape)
         expected_state_action_values = next_Q_value * self.hparams.model.gamma + rewards_out
-
-        return nn.MSELoss()(Q_value, expected_state_action_values) - (Q_value).mean()
+        #print(expected_state_action_values.shape, Q_value.shape)
+        return {"loss": nn.MSELoss()(Q_value, expected_state_action_values), "policy_loss": - (Q_value).mean()}
 
     def populate(self, steps: int = 1000) -> None:
         '''
@@ -164,7 +165,7 @@ class AgentTrainer(pl.LightningModule):
 
         # calculates training loss
         loss = self.dqn_mse_loss(batch)
-
+        #print(loss)
         self.log("train_loss", loss["loss"], on_epoch = True, prog_bar = True, on_step = True, logger = True)
         self.log("policy_loss", loss["policy_loss"], on_epoch = True, prog_bar = True, on_step = True, logger = True)
 
@@ -202,7 +203,7 @@ class AgentTrainer(pl.LightningModule):
             self.episode_steps = 0
             self.total_reward = self.episode_reward
             self.agent.reset()
-
+        #print(loss_out)
         #return OrderedDict({'loss': loss, 'log': log, 'progress_bar': log})
         return loss_out
 

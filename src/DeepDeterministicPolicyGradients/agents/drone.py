@@ -13,7 +13,7 @@ class OUNoise:
     '''
     Noise model for RL agent
     '''
-    def __init__(self, action_dimension, dt=0.01, mu=0, theta=0.15, sigma=0.2):
+    def __init__(self, action_dimension, dt=0.01, mu=0, theta=0.15, sigma=0.5):
 
         self.action_dimension = action_dimension
         self.dt = dt

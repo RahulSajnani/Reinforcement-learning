@@ -92,7 +92,8 @@ class AgentTrainer(pl.LightningModule):
             loss
         """
         states, actions, rewards, dones, next_states = batch
-
+        print(rewards.shape)
+        print(states["image"].shape)
         rewards_out = rewards[:, -1]
         #print(rewards.shape, actions.shape, "reward, action")
         # print(states["image"].shape)
