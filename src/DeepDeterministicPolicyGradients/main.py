@@ -100,10 +100,10 @@ class AgentTrainer(pl.LightningModule):
         dones = dones.float()
         rewards_out = rewards[:, -1]
 
-        
+
         Q_value = self.critic(states["image"], states["signal"], actions.float()).squeeze(-1)
 
-        
+
         with torch.no_grad():
 
             next_action_value = self.target_net(next_states["image"], next_states["signal"])
@@ -113,24 +113,24 @@ class AgentTrainer(pl.LightningModule):
 
         expected_state_action_values = next_Q_value * self.hparams.model.gamma * (1 - dones) + rewards_out
         critic_loss = nn.MSELoss()(Q_value, expected_state_action_values)
-        
+
         # Critic backward pass
         opt_critic, opt_actor = self.optimizers()
-        
+
         opt_critic.zero_grad()
         self.manual_backward(critic_loss)
         opt_critic.step()
 
-    
+
         # Actor backward pass
-        actor_loss = - 0.01 * (Q_value_policy).mean()
         action_value = self.net(next_states["image"], next_states["signal"])
         Q_value_policy = self.critic(states["image"], states["signal"], action_value).squeeze(-1)
-        
+
+        actor_loss = - 0.01 * (Q_value_policy).mean()
         opt_actor.zero_grad()
         self.manual_backward(actor_loss)
         opt_actor.step()
-        
+
         return {"loss": critic_loss, "policy_loss": actor_loss}
 
     def populate(self, steps: int = 1000) -> None:
@@ -213,7 +213,7 @@ class AgentTrainer(pl.LightningModule):
             self.total_reward = self.episode_reward
             self.agent.reset()
 
-        
+
 
         return loss_out
 
