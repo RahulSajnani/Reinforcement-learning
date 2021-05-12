@@ -67,6 +67,7 @@ class AgentTrainer(pl.LightningModule):
         self.episode_steps = 0.0
         self.max_episode_steps = self.hparams.model.max_episode
         self.episode_reward = 0.0
+        self.automatic_optimization = False
 
 
     def soft_update(self, target, source, tau):
@@ -195,8 +196,19 @@ class AgentTrainer(pl.LightningModule):
             self.episode_steps = 0
             self.total_reward = self.episode_reward
             self.agent.reset()
-        #print(loss_out)
-        #return OrderedDict({'loss': loss, 'log': log, 'progress_bar': log})
+
+        # Backward pass
+        opt_critic, opt_actor = self.optimizers()
+        
+        opt_critic.zero_grad()
+        self.manual_backward(loss["loss"])
+        opt_critic.step()
+        
+        opt_actor.zero_grad()
+        self.manual_backward(loss["policy_loss"])
+        opt_actor.step()
+        
+
         return loss_out
 
 
