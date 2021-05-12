@@ -111,7 +111,9 @@ class AgentTrainer(pl.LightningModule):
             next_action_value = next_action_value.detach()
             next_Q_value = next_Q_value.detach()
 
-        expected_state_action_values = next_Q_value * self.hparams.model.gamma * (1 - dones) + rewards_out
+        #print(next_Q_value.shape, dones.shape, rewards_out.shape, "Check")
+        expected_state_action_values = next_Q_value * self.hparams.model.gamma * (1 - dones.squeeze()) + rewards_out
+        #print(expected_state_action_values.shape, Q_value.shape)
         critic_loss = nn.MSELoss()(Q_value, expected_state_action_values)
 
         # Critic backward pass
@@ -125,6 +127,7 @@ class AgentTrainer(pl.LightningModule):
         # Actor backward pass
         action_value = self.net(next_states["image"], next_states["signal"])
         Q_value_policy = self.critic(states["image"], states["signal"], action_value).squeeze(-1)
+
 
         actor_loss = - 0.01 * (Q_value_policy).mean()
         opt_actor.zero_grad()

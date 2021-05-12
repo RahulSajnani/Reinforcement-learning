@@ -196,7 +196,7 @@ class Drone:
 
         #print(state_image.max())
         state_image = state_image / 255.0
-        print(state_image.max(), state_image.var())
+        #print(state_image.max(), state_image.var())
         #print(state_image.shape, state_signal_strength.shape)
         return {"image": state_image, "signal": state_signal_strength}
 
@@ -267,7 +267,7 @@ class Drone:
         if not done:
             reward = self.sensor.getReward(current_position, self.start_position, action_offset.detach().squeeze())
 
-        print(reward)
+        print("Reward:", reward)
 
         # exp = batchStates(state_dict, action_offset, reward, done, new_state_dict)
         # exp = Experience(state_dict, action_offset, reward, done, new_state_dict)
