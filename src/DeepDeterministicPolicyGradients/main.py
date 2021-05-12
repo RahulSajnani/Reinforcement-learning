@@ -99,7 +99,7 @@ class AgentTrainer(pl.LightningModule):
         rewards = rewards.float()
         dones = dones.float()
         rewards_out = rewards[:, -1]
-
+        #print(states["image"].max())
 
         Q_value = self.critic(states["image"], states["signal"], actions.float()).squeeze(-1)
 
@@ -129,11 +129,13 @@ class AgentTrainer(pl.LightningModule):
         Q_value_policy = self.critic(states["image"], states["signal"], action_value).squeeze(-1)
 
 
-        actor_loss = - 0.01 * (Q_value_policy).mean()
+        actor_loss = -  (Q_value_policy).mean()
         opt_actor.zero_grad()
         self.manual_backward(actor_loss)
         opt_actor.step()
 
+        self.soft_update(self.target_net, self.net, self.hparams.model.tau)
+        self.soft_update(self.target_critic, self.critic, self.hparams.model.tau)
         return {"loss": critic_loss, "policy_loss": actor_loss}
 
     def populate(self, steps: int = 1000) -> None:
@@ -172,7 +174,7 @@ class AgentTrainer(pl.LightningModule):
         print("eps:", epsilon)
 
         # step through environment with agent
-        reward, done = self.agent.playStep(self.target_net, epsilon, device)
+        reward, done = self.agent.playStep(self.net, epsilon, device)
         self.episode_reward += reward
 
         # calculates training loss
@@ -195,10 +197,10 @@ class AgentTrainer(pl.LightningModule):
             loss_out = loss["loss"]
 
         # Soft update of target network
-        if self.global_step % self.hparams.model.sync_rate == 0:
+        #if self.global_step % self.hparams.model.sync_rate == 0:
 
-            self.soft_update(self.target_net, self.net, self.hparams.model.tau)
-            self.soft_update(self.target_critic, self.critic, self.hparams.model.tau)
+         #   self.soft_update(self.target_net, self.net, self.hparams.model.tau)
+          #  self.soft_update(self.target_critic, self.critic, self.hparams.model.tau)
 
             # self.target_net.load_state_dict(self.net.state_dict())
             # self.target_critic.load_state_dict(self.critic.state_dict())

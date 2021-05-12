@@ -12,9 +12,10 @@ scheduler:
     gamma: 0.1
 
 optimizer:
-  type: Adam
+  type: RMSprop
   args:
-    lr: 0.002
+    lr: 0.0002
+    momentum: 0.2
 
 environment:
   server:
@@ -41,7 +42,7 @@ environment:
       z_val: 0.0
   reward:
     goal: 1000.0
-    collision: -100.0
+    collision: -10.0
     factor: 0.001
   sensor:
     signal_strength_factor: 0.01
@@ -66,7 +67,7 @@ model:
     action_dim: 3
     init_w: 3e-3
   tau: 0.001
-  replay_buffer_size: 200
+  replay_buffer_size: 80
   in_channels: 3
   actions: 6
   max_epsilon: 0.9

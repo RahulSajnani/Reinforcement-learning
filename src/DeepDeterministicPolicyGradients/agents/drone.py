@@ -120,9 +120,9 @@ class Drone:
                 new_image_batch.append(next_states_old["image"])
                 new_signal_batch.append(next_states_old["signal"])
 
-        state_out = {"image": torch.cat(image_batch, dim = 0), "signal":torch.cat(signal_batch, dim = 0)}
+        state_out = {"image": torch.cat(image_batch, dim = 0).float(), "signal":torch.cat(signal_batch, dim = 0).float()}
 
-        next_state_out = {"image": torch.cat(new_image_batch, dim = 0), "signal": torch.cat(new_signal_batch, dim = 0)}
+        next_state_out = {"image": torch.cat(new_image_batch, dim = 0).float(), "signal": torch.cat(new_signal_batch, dim = 0).float()}
 
         exp_out = Experience(state=state_out, action = actions, reward = torch.tensor([rewards]), done = torch.tensor([dones]), new_state = next_state_out)
 
@@ -191,8 +191,8 @@ class Drone:
         state_image = self.getImage()
         state_signal_strength = self.sensor.getSignalStrength(position)
 
-        state_image = torch.tensor(state_image).permute(2, 0, 1).long()
-        state_signal_strength = torch.tensor([state_signal_strength]).long()
+        state_image = torch.tensor(state_image).permute(2, 0, 1).float()
+        state_signal_strength = torch.tensor([state_signal_strength]).float()
 
         #print(state_image.max())
         state_image = state_image / 255.0
@@ -214,7 +214,7 @@ class Drone:
                 state_dict[key] = state_dict[key].cuda(device)
 
         #print(state_dict["image"].shape,state_dict["signal"].shape )
-        action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
+        action = net(state_dict["image"].unsqueeze(0).float(), state_dict["signal"].unsqueeze(0).float()).detach().cpu().numpy().squeeze()
         if np.random.random() < epsilon:
             #action_out = self.nextAction(np.random.randint(6))
             action_out = torch.tensor([action[0], action[1], action[2]])
