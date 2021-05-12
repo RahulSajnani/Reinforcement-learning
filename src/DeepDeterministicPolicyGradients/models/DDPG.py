@@ -18,8 +18,8 @@ def conv_block(in_channels, out_channels, kernel, padding):
 
     return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel, padding=padding, bias = False),
-            nn.InstanceNorm2d(out_channels),
-            #nn.BatchNorm2d(out_channels),
+            #nn.InstanceNorm2d(out_channels),
+            nn.BatchNorm2d(out_channels),
             #nn.ELU(inplace=False),
             nn.LeakyReLU(inplace=True)
         )

@@ -14,7 +14,7 @@ scheduler:
 optimizer:
   type: Adam
   args:
-    lr: 0.0002
+    lr: 0.002
 
 environment:
   server:
@@ -46,27 +46,27 @@ environment:
   sensor:
     signal_strength_factor: 0.01
   agent:
-    velocity_factor: 2
-    num_batch: 2
+    velocity_factor: 3
+    num_batch: 4
 
 dataset:
   loader:
-    batch_size: 4
+    batch_size: 8
     num_workers: 8
     #shuffle: True
     #sampler: None   
 
 model:
   actor:
-    in_channels: 6
+    in_channels: 12
     action_dim: 3
     init_w: 3e-3
   critic:
-    in_channels: 6
+    in_channels: 12
     action_dim: 3
     init_w: 3e-3
   tau: 0.001
-  replay_buffer_size: 200
+  replay_buffer_size: 80
   in_channels: 3
   actions: 6
   max_epsilon: 0.9

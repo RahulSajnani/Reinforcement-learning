@@ -21,7 +21,7 @@ class HeatSensor:
         self.strength_factor = strength_factor
         self.reward_factor   = reward_factor
         self.max_distance = 2500
-
+        self.cos = torch.nn.CosineSimilarity()
 
     def getSignalStrength(self, position):
         '''
@@ -46,14 +46,18 @@ class HeatSensor:
 
         return distance
 
-    def getReward(self, position):
+    def getReward(self, position, start_position, velocity):
         '''
         Get the reward for being reaching a position
         '''
 
         distance = self.getDistanceFromDestination(position)
+        distance_start = self.getDistanceFromDestination(start_position)
+
+        direction = self.source_position - position
+        print(direction.shape, velocity.shape)
         # reward   = self.reward_factor * (- distance)
-        reward = - (distance / self.max_distance)**(0.4)
+        reward = - (distance / self.max_distance)**(0.8) + 0.07 * (distance_start / self.max_distance)**(0.7) + 0.1 * self.cos(direction.squeeze().unsqueeze(0), velocity.unsqueeze(0))*((distance) / self.max_distance)
 
         reward   = torch.tensor([reward])
 

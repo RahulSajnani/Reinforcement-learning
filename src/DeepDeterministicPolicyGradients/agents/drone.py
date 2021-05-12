@@ -196,7 +196,7 @@ class Drone:
 
         #print(state_image.max())
         state_image = state_image / 255.0
-
+        print(state_image.max(), state_image.var())
         #print(state_image.shape, state_signal_strength.shape)
         return {"image": state_image, "signal": state_signal_strength}
 
@@ -216,13 +216,14 @@ class Drone:
         #print(state_dict["image"].shape,state_dict["signal"].shape )
         action = net(state_dict["image"].unsqueeze(0), state_dict["signal"].unsqueeze(0)).detach().cpu().numpy().squeeze()
         if np.random.random() < epsilon:
+            #action_out = self.nextAction(np.random.randint(6))
             action_out = torch.tensor([action[0], action[1], action[2]])
             noise_out = self.noise.noise()
             action = torch.tensor([np.clip(action_out[0] + noise_out[0], -1, 1), np.clip(action_out[1] + noise_out[1], -1, 1), np.clip(action_out[2] + noise_out[2], -1, 1)])
         else:
             action = torch.tensor([action[0], action[1], action[2]])
 
-        return action
+        return action * self.scaling_factor
 
 
     @torch.no_grad()
@@ -264,7 +265,8 @@ class Drone:
         print(self.position.position)
         # print(self.client.getMultirotorState().kinematics_estimated.position)
         if not done:
-            reward = self.sensor.getReward(current_position)
+            reward = self.sensor.getReward(current_position, self.start_position, action_offset.detach().squeeze())
+
         print(reward)
 
         # exp = batchStates(state_dict, action_offset, reward, done, new_state_dict)

@@ -77,8 +77,8 @@ class AgentTrainer(pl.LightningModule):
 
     def configure_optimizers(self):
 
-        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr * 2}], **self.hparams.optimizer.args)
-        optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args)
+        optimizer2 = getattr(torch.optim, self.hparams.optimizer.type)([{"params": self.net.parameters(), "lr": self.hparams.optimizer.args.lr}], **self.hparams.optimizer.args)
+        optimizer = getattr(torch.optim, self.hparams.optimizer.type)(self.critic.parameters(), **self.hparams.optimizer.args, weight_decay=1e-3)
 
         scheduler2 = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
         scheduler = getattr(torch.optim.lr_scheduler, self.hparams.scheduler.type)(optimizer, **self.hparams.scheduler.args)
@@ -94,35 +94,27 @@ class AgentTrainer(pl.LightningModule):
             loss
         """
         states, actions, rewards, dones, next_states = batch
-
-        #print(states["image"].shape, rewards.shape)
+        actions = actions.float()
+        rewards = rewards.float()
+        dones = dones.float()
         rewards_out = rewards[:, -1]
-        print(actions.shape, rewards_out.shape, rewards.shape, "shapes")
-        #print(rewards.shape, actions.shape, "reward, action")
-        # print(states["image"].shape)
-        # state_action_values = self.net(states["image"], states["signal"]).gather(1, actions.unsqueeze(-1)).squeeze(-1)
+
         action_value = self.net(next_states["image"], next_states["signal"])
         Q_value = self.critic(states["image"], states["signal"], actions.float()).squeeze(-1)
         Q_value_policy = self.critic(states["image"], states["signal"], action_value).squeeze(-1)
 
-        # print(state_action_values)
 
         with torch.no_grad():
 
-
             next_action_value = self.target_net(next_states["image"], next_states["signal"])
-            #print(next_action_value.shape, "action")
             next_Q_value = self.target_critic(next_states["image"], next_states["signal"], next_action_value).squeeze(-1)
-            # next_state_values[dones] = 0.0
-            #print("Q value:", next_Q_value.shape)
             next_action_value = next_action_value.detach()
             next_Q_value = next_Q_value.detach()
 
 
-        #print(next_Q_value.shape, rewards_out.shape)
         expected_state_action_values = next_Q_value * self.hparams.model.gamma * (1 - dones) + rewards_out
-        #print(expected_state_action_values.shape, Q_value.shape)
-        return {"loss": nn.MSELoss()(Q_value, expected_state_action_values), "policy_loss": - (Q_value_policy).mean()}
+
+        return {"loss": nn.MSELoss()(Q_value, expected_state_action_values), "policy_loss": - 0.01 * (Q_value_policy).mean()}
 
     def populate(self, steps: int = 1000) -> None:
         '''
