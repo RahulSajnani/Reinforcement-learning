@@ -57,7 +57,7 @@ class HeatSensor:
         direction = self.source_position - position
         #print(direction.shape, velocity.shape)
         # reward   = self.reward_factor * (- distance)
-        reward = - (distance / self.max_distance)**(0.8) + 0.07 * (distance_start / self.max_distance)**(0.7) + 0.1 * self.cos(direction.squeeze().unsqueeze(0), velocity.unsqueeze(0))*((distance) / self.max_distance)
+        reward = - (distance / self.max_distance)**(0.8) + 0.07 * (distance_start / self.max_distance)**(0.7) + 0.1 * self.cos(direction.squeeze().unsqueeze(0), velocity.unsqueeze(0))*((distance) / self.max_distance) - 0.01 * torch.norm(velocity)*( self.max_distance / (distance + 100))
 
         reward   = torch.tensor([reward])
 

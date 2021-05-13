@@ -12,7 +12,7 @@ scheduler:
     gamma: 0.1
 
 optimizer:
-  type: RMSprop
+  type: SGD
   args:
     lr: 0.0002
     momentum: 0.2
@@ -48,7 +48,7 @@ environment:
     signal_strength_factor: 0.01
   agent:
     velocity_factor: 3
-    num_batch: 4
+    num_batch: 2
 
 dataset:
   loader:
@@ -59,11 +59,11 @@ dataset:
 
 model:
   actor:
-    in_channels: 12
+    in_channels: 6
     action_dim: 3
     init_w: 3e-3
   critic:
-    in_channels: 12
+    in_channels: 6
     action_dim: 3
     init_w: 3e-3
   tau: 0.001

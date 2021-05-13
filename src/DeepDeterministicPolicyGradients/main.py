@@ -125,7 +125,7 @@ class AgentTrainer(pl.LightningModule):
 
 
         # Actor backward pass
-        action_value = self.net(next_states["image"], next_states["signal"])
+        action_value = self.net(states["image"], states["signal"])
         Q_value_policy = self.critic(states["image"], states["signal"], action_value).squeeze(-1)
 
 
@@ -174,7 +174,7 @@ class AgentTrainer(pl.LightningModule):
         print("eps:", epsilon)
 
         # step through environment with agent
-        reward, done = self.agent.playStep(self.net, epsilon, device)
+        reward, done = self.agent.playStep(self.target_net, epsilon, device)
         self.episode_reward += reward
 
         # calculates training loss
