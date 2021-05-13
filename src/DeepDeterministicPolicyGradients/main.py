@@ -174,7 +174,7 @@ class AgentTrainer(pl.LightningModule):
         print("eps:", epsilon)
 
         # step through environment with agent
-        reward, done = self.agent.playStep(self.target_net, epsilon, device)
+        reward, done = self.agent.playStep(self.net, epsilon, device)
         self.episode_reward += reward
 
         # calculates training loss

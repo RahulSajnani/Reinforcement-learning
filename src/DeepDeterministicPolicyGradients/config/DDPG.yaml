@@ -14,7 +14,7 @@ scheduler:
 optimizer:
   type: SGD
   args:
-    lr: 0.0002
+    lr: 0.002
     momentum: 0.2
 
 environment:
