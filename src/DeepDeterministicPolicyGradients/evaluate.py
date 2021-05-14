@@ -1,7 +1,7 @@
 import sys, os
 import argparse
 import torch
-from models.DQN import DQN
+from models.DDPG import *
 from dataset.RLdataset import *
 from sensors.heat_sensor import HeatSensor
 from agents.drone import Drone
@@ -11,7 +11,8 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import CometLogger, TensorBoardLogger
 from torch.utils.data import DataLoader
 import torch.nn as nn
-from trainer import *
+from main import *
+#from trainer import *
 
 
 if __name__=="__main__":
